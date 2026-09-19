@@ -1,7 +1,8 @@
+import json
+
 class BankAccount:
     def __init__(self,name,balance,acc_no):
         self.name=name
-
         self.balance=balance
         self.acc_no=acc_no
 
@@ -50,6 +51,7 @@ def create_account():
         print('Invalid input try again')
     acc=BankAccount(name,balance,next_acc_no)
     accounts[next_acc_no]=acc
+    save_accounts()
     print(f'Account created!,Your account number is {next_acc_no} with the user name of {name}')
     next_acc_no+=1
     return acc
@@ -64,7 +66,34 @@ def login():
             return accounts[acc_no]
         print('Details not found')
 
+Data_file='accounts.json'
+
+def save_accounts():
+    data={}
+    for acc_no,acc in accounts.items():
+        data[acc_no]={
+            'name':acc.name,
+            'balance':acc.balance,
+            'acc_no':acc.acc_no
+        }
+    with open(Data_file,'w') as f:
+        json.dump(data, f,indent=4)
+
+def load_accounts():
+    global accounts,next_acc_no
+    try:
+        with open(Data_file,'r') as f:
+            data =json.load(f)
+        for acc_no_str,info in data.items():
+            acc_no=int(acc_no_str)
+            accounts[acc_no]=BankAccount(info['name'],info['balance'],info['acc_no'])
+            if acc_no<=next_acc_no:
+                next_acc_no=acc_no+1
+    except FileNotFoundError:
+        pass
+
 print('----XYZ BANKING SERVICES----')
+load_accounts()
 current_acc=create_account() if input('New user?(yes=Y,no=N):').lower()=='y' else login()
 if current_acc:
     while True:
@@ -76,8 +105,10 @@ if current_acc:
             current_acc.check_bal()
         elif service==2:
             current_acc.add_money()
+            save_accounts()
         elif service==3:
             current_acc.withdrawal()
+            save_accounts()
         elif service==4:
             print('Thanks for choosing us')
-            break
+            break   
